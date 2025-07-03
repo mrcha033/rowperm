@@ -2,111 +2,91 @@ name: Build Wheels
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
+env:
+  CIBW_ARCHS_LINUX: "x86_64"
+  CIBW_BUILD: "cp39-* cp310-* cp311-*"
+  CIBW_SKIP: "*-musllinux_*"
+  CIBW_BUILD_VERBOSITY: "1"
+  CIBW_MANYLINUX_X86_64_IMAGE: "nvidia/cuda:12.1.1-devel-centos7"
+
 jobs:
+# ────────────────────────────────────────────────────────────
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Install cibuildwheel
-      run: python -m pip install cibuildwheel==2.16.2
-    
-    - name: Build wheels
-      env:
-        CIBW_ARCHS_LINUX: "x86_64"
-        CIBW_BUILD: "cp39-manylinux_x86_64 cp310-manylinux_x86_64 cp311-manylinux_x86_64"
-        CIBW_SKIP: "*-musllinux_*"
-        CIBW_BUILD_VERBOSITY: "1"
-        CIBW_BEFORE_ALL_LINUX: |
-          yum install -y wget
-          wget https://developer.download.nvidia.com/compute/cuda/repos/centos7/x86_64/cuda-centos7.repo -O /etc/yum.repos.d/cuda-centos7.repo
-          yum clean all
-          yum install -y cuda-toolkit-12-1
-        CIBW_ENVIRONMENT: >
-          PATH="/usr/local/cuda-12.1/bin:$PATH"
-          LD_LIBRARY_PATH="/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH"
-          TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0+PTX"
-          FORCE_CUDA=1
-        CIBW_BEFORE_BUILD: >
-          pip install wheel setuptools &&
-          pip install torch --index-url https://download.pytorch.org/whl/cu121 &&
-          pip install ninja
-        CIBW_REPAIR_WHEEL_COMMAND: >
-          auditwheel repair -w {dest_dir} {wheel}
-        CIBW_TEST_REQUIRES: pytest
-        CIBW_TEST_COMMAND: >
-          cd {project} &&
-          pytest tests/test_correctness.py::TestCorrectness::test_error_handling -v
-      run: |
-        python -m cibuildwheel --output-dir wheelhouse
-    
-    - name: Upload wheels
-      uses: actions/upload-artifact@v4
-      with:
-        name: wheels-linux-cuda
-        path: ./wheelhouse/*.whl
-        
-  build_sdist:
-    name: Build source distribution
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up Python
+
+    - name: 🔧 Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+
+    - name: 🐍 Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build wheel setuptools
-    
-    - name: Build sdist
-      run: python -m build --sdist
-    
-    - name: Upload sdist
-      uses: actions/upload-artifact@v4
+        python-version: "3.10"
+
+    - name: 📦 Install cibuildwheel
+      run: python -m pip install --upgrade pip cibuildwheel==2.16.2
+
+    - name: 🚀 Build wheels
+      env:
+        # CUDA 런타임은 컨테이너에 이미 포함
+        CIBW_ENVIRONMENT: >
+          TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0+PTX"
+          FORCE_CUDA=1
+        # 빌드 때 필요한 패키지
+        CIBW_BEFORE_BUILD: |
+          pip install wheel setuptools ninja &&
+          pip install torch==2.3.0 --extra-index-url https://download.pytorch.org/whl/cu121
+        # CUDA so 화이트리스트 제외
+        CIBW_REPAIR_WHEEL_COMMAND: >
+          auditwheel repair -w {dest_dir} --exclude libcuda.so.* --exclude libnvidia-*.so.* {wheel}
+        # GPU 없는 환경에서 테스트 건너뛰기
+        CIBW_TEST_REQUIRES: "pytest numpy"
+        CIBW_TEST_COMMAND: >
+          pytest {project}/tests -m "not gpu"
+      run: python -m cibuildwheel --output-dir wheelhouse
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: wheels-linux-cuda
+        path: wheelhouse/*.whl
+
+# ────────────────────────────────────────────────────────────
+  build_sdist:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with: {python-version: "3.10"}
+    - run: |
+        python -m pip install --upgrade pip build
+        python -m build --sdist
+    - uses: actions/upload-artifact@v4
       with:
         name: sdist
         path: dist/*.tar.gz
 
+# ────────────────────────────────────────────────────────────
   publish:
-    name: Publish to PyPI
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    
     steps:
     - uses: actions/download-artifact@v4
-      with:
-        name: wheels-linux-cuda
-        path: dist
-    
+      with: {name: wheels-linux-cuda, path: dist}
     - uses: actions/download-artifact@v4
-      with:
-        name: sdist
-        path: dist
-    
-    - name: Publish to PyPI
+      with: {name: sdist, path: dist}
+    - name: 📤 Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
-        skip_existing: true 
+        skip_existing: true

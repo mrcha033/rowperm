@@ -2,16 +2,16 @@
 
 Fast row permutation operations for PyTorch tensors with CUDA acceleration.
 
-[![PyPI](https://img.shields.io/pypi/v/torch-rowperm)](https://pypi.org/project/torch-rowperm/)
+[![PyPI](https://img.shields.io/pypi/v/rowperm)](https://pypi.org/project/rowperm/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://github.com/yunmin/torch_rowperm/actions/workflows/test.yml/badge.svg)](https://github.com/yunmin/torch_rowperm/actions/workflows/test.yml)
+[![Tests](https://github.com/mrcha033/rowperm/actions/workflows/test.yml/badge.svg)](https://github.com/mrcha033/rowperm/actions/workflows/test.yml)
 
 ## Installation
 
 ### Quick install (Linux + CUDA ≥12.1)
 
 ```bash
-pip install torch-rowperm
+pip install rowperm
 ```
 
 ### macOS / Windows
@@ -23,7 +23,7 @@ Pre-built wheels are not provided yet. Compilation from source is required:
 brew install cuda
 
 # Install from source
-pip install torch-rowperm --no-binary torch-rowperm
+pip install rowperm --no-binary rowperm
 ```
 
 **Note**: Compilation requires a working CUDA toolkit and compatible compiler.
@@ -74,8 +74,8 @@ The CUDA kernel provides significant speedup over native PyTorch indexing for la
 
 ```bash
 # Clone the repository
-git clone https://github.com/yunmin/torch_rowperm.git
-cd torch_rowperm
+git clone https://github.com/mrcha033/rowperm.git
+cd rowperm
 
 # Install in development mode
 pip install -e .
@@ -106,9 +106,9 @@ If you use this package in your research, please cite:
 
 ```bibtex
 @software{torch_rowperm,
-  author = {Yunmin},
+  author = {mrcha033},
   title = {torch_rowperm: Fast row permutation for PyTorch},
-  year = {2024},
-  url = {https://github.com/yunmin/torch_rowperm}
+  year = {2025},
+  url = {https://github.com/mrcha033/rowperm}
 }
 ``` 

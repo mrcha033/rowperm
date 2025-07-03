@@ -1,0 +1,13 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include setup.py
+include pytest.ini
+recursive-include torch_rowperm *.py *.cpp *.cu *.h
+recursive-include tests *.py
+recursive-exclude * __pycache__
+recursive-exclude * *.py[cod]
+recursive-exclude * *.so
+recursive-exclude * *.dylib
+recursive-exclude * *.dll
+recursive-exclude * *.pyd 

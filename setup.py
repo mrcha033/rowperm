@@ -44,10 +44,35 @@ if is_cuda_available():
     )
 
 setup(
+    name="torch_rowperm",
+    version="0.1.0",
+    description="Fast row permutation operations for PyTorch tensors",
+    long_description=open("README.md", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
+    author="mrcha033",
+    author_email="mrcha033@gmail.com",
+    url="https://github.com/mrcha033/rowperm",
+    license="MIT",
+    python_requires=">=3.9",
+    install_requires=["torch>=2.0.0"],
     ext_modules=ext_modules,
     cmdclass={'build_ext': BuildExtension.with_options(no_python_abi_suffix=True)},
     packages=find_packages(),
     package_data={
         'torch_rowperm': ['*.so', '*.pyd'],
     },
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: C++",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    ],
 ) 

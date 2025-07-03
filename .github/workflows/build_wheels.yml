@@ -30,17 +30,13 @@ jobs:
         CIBW_SKIP: "*-musllinux_*"
         CIBW_MANYLINUX_X86_64_IMAGE: pytorch/manylinux-builder:cuda12.1
         CIBW_BUILD_VERBOSITY: "1"
+        CIBW_SKIP_REPAIR: "1"
 
         CIBW_BEFORE_BUILD: |
           pip install --no-cache-dir -U pip wheel setuptools ninja \
           && pip install --no-cache-dir torch==2.3.0+cpu \
                 -f https://download.pytorch.org/whl/torch_stable.html
         PIP_NO_CACHE_DIR: "off"
-
-        CIBW_REPAIR_WHEEL_COMMAND: >
-          auditwheel repair -w {dest_dir} \
-            --plat manylinux2014_x86_64 \
-            --exclude "libcuda.so.*,libcudart.so.*,libnvidia-*.so.*" {wheel}
 
         CIBW_TEST_REQUIRES: "pytest numpy"
         CIBW_TEST_COMMAND: pytest {project}/tests -m "not gpu"

@@ -1,35 +1,37 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=65.5.0",
     "wheel",
-    "torch>=2.0.0"
+    "torch>=2.0.0",
+    "numpy>=1.20.0"
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "torch_rowperm"
+name = "rowperm"
 version = "0.1.0"
+author = "mrcha033"
+author_email = "mrcha033@gmail.com"
 description = "Fast row permutation operations for PyTorch tensors"
 readme = "README.md"
-authors = [
-    {name = "rowperm developers", email = "rowperm@example.com"}
-]
-license = {text = "MIT"}
+license = { file = "LICENSE" }
 requires-python = ">=3.9"
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+classifiers=[
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Science/Research',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
 ]
 dependencies = [
     "torch>=2.0.0",
     "numpy>=1.20.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mrcha033/rowperm"
 
 [project.optional-dependencies]
 dev = [
@@ -40,22 +42,12 @@ dev = [
 triton = [
     "triton>=2.0.0",
 ]
-all = [
-    "triton>=2.0.0",
-    "pytest>=6.0.0",
-    "black>=22.0.0",
-    "isort>=5.0.0",
-]
-
-[project.urls]
-"Homepage" = "https://github.com/mrcha033/rowperm"
-"Bug Tracker" = "https://github.com/mrcha033/rowperm/issues"
 
 [tool.setuptools]
-packages = ["rowperm"]
+packages = ["torch_rowperm", "torch_rowperm._cuda", "torch_rowperm._triton"]
 
 [tool.setuptools.package-data]
-torch_rowperm = ["*.so", "*.pyd"]
+"rowperm" = ["_cuda/*.cpp", "_cuda/*.cu", "py.typed"]
 
 [tool.cibuildwheel]
 build = "cp3*-manylinux_x86_64"

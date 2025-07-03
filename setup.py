@@ -1,21 +1,7 @@
 import os
-import sys
-from setuptools import setup, find_packages
 import torch
+from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
-
-# Read version from the package
-with open(os.path.join('torch_rowperm', '__init__.py'), 'r') as f:
-    for line in f:
-        if line.startswith('__version__'):
-            version = line.split('=')[1].strip().strip('"\'')
-            break
-    else:
-        version = '0.1.0'
-
-# Get the long description from README.md
-with open('README.md', 'r', encoding='utf-8') as f:
-    long_description = f.read()
 
 # List of source files for CUDA extension
 sources = [
@@ -45,45 +31,8 @@ ext_modules = [
 ]
 
 setup(
-    name='torch_rowperm',
-    version=version,
-    author='rowperm developers',
-    author_email='rowperm@example.com',
-    description='Fast row permutation operations for PyTorch tensors',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/username/rowperm',
-    packages=find_packages(),
     ext_modules=ext_modules,
     cmdclass={
         'build_ext': BuildExtension
-    },
-    install_requires=[
-        'torch>=2.0.0',
-        'numpy>=1.20.0',
-    ],
-    extras_require={
-        'dev': [
-            'pytest>=6.0.0',
-            'black>=22.0.0',
-            'isort>=5.0.0',
-        ],
-        'triton': [
-            'triton>=2.0.0',
-        ],
-    },
-    python_requires='>=3.9',
-    classifiers=[
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
-    ],
-    package_data={
-        'torch_rowperm': ['_cuda/*.cpp', '_cuda/*.cu', 'py.typed'],
     },
 ) 

@@ -16,13 +16,22 @@ pip install rowperm
 
 ### macOS / Windows
 
-Pre-built wheels are not provided yet. Compilation from source is required:
+Pre-built wheels are not provided yet. 
+
+#### macOS
+macOS users will get the CPU-only version by default:
 
 ```bash
-# macOS
-brew install cuda
+pip install rowperm
+```
 
-# Install from source
+Note: CUDA extensions are not officially supported on macOS.
+
+#### Windows
+Windows users with CUDA need to compile from source:
+
+```bash
+# Make sure you have the CUDA toolkit installed
 pip install rowperm --no-binary rowperm
 ```
 
@@ -32,7 +41,7 @@ pip install rowperm --no-binary rowperm
 
 ```python
 import torch
-import torch_rowperm as rp
+import rowperm as rp
 
 # Create a tensor and permutation indices
 x = torch.randn(1000, 512, device='cuda')

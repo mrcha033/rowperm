@@ -2,6 +2,6 @@
 
 __version__ = "0.1.0"
 
-from .core import permute_rows
+from .core import permute_rows, permute_rows_
  
-__all__ = ["permute_rows", "__version__"] 
+__all__ = ["permute_rows", "permute_rows_", "__version__"] 

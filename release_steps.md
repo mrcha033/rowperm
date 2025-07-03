@@ -103,9 +103,10 @@ python -m twine upload dist/*
    pip install torch-rowperm
    ```
    
-   ## Known Issues
-   - Pre-built wheels available for Linux + CUDA only
-   - Mac/Windows users need to compile from source
+   ## Platform Support
+   - Linux: CUDA-accelerated wheels available
+   - macOS: CPU-only version (CUDA not supported on macOS)
+   - Windows: Source compilation required for CUDA support
    ```
 
 7. Attach the wheel files

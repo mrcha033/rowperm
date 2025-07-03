@@ -2,14 +2,16 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <c10/cuda/CUDAGuard.h>
+#include <cuda_fp16.h>
+#include <vector_types.h>
 
 // Vector types for coalesced memory access
 template <typename scalar_t>
 struct VectorType { using type = scalar_t; };
 
 template <> struct VectorType<float> { using type = float4; };
-template <> struct VectorType<half> { using type = half2; };
-template <> struct VectorType<at::BFloat16> { using type = at::BFloat162; };
+template <> struct VectorType<at::Half> { using type = float2; }; // half2 equivalent 
+template <> struct VectorType<at::BFloat16> { using type = float2; }; // bf16x2 equivalent
 
 // Specialization for different data types
 template <typename scalar_t, typename vec_t, int VEC_SIZE>

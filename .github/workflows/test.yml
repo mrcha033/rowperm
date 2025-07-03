@@ -23,9 +23,22 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
+    - name: Check directory structure
+      run: |
+        echo "Checking directory structure..."
+        ls -la
+        echo "torch_rowperm directory:"
+        ls -la torch_rowperm/
+        echo "torch_rowperm/_cuda directory:"
+        ls -la torch_rowperm/_cuda/
+        echo "tests directory:"
+        ls -la tests/
+      shell: bash
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install wheel build setuptools
         pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
         pip install pytest pytest-cov
         pip install -e . --no-build-isolation

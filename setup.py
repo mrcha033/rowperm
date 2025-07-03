@@ -1,7 +1,7 @@
 import os
 import sys
+import platform
 from setuptools import setup, find_packages
-from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 # Get the absolute path to the directory containing setup.py
 setup_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,31 +17,43 @@ def is_cuda_available():
 # Build extensions list
 ext_modules = []
 
-if is_cuda_available():
-    ext_modules.append(
-        CUDAExtension(
-            name='torch_rowperm._C',
-            sources=[
-                'torch_rowperm/_cuda/row_perm.cpp',
-                'torch_rowperm/_cuda/row_perm.cu',
-            ],
-            extra_compile_args={
-                'cxx': ['-O3'],
-                'nvcc': [
-                    '-O3',
-                    '--use_fast_math',
-                    '-lineinfo',
-                    '--ptxas-options=-v',
-                    '-gencode=arch=compute_80,code=sm_80',
-                    '-gencode=arch=compute_86,code=sm_86',
-                    '-gencode=arch=compute_89,code=sm_89',
-                    '-gencode=arch=compute_90,code=sm_90',
-                    '-gencode=arch=compute_90,code=compute_90',  # PTX for forward compat
+# Only try to build CUDA extension if we're on Linux or Windows
+# macOS is not officially supported for CUDA extensions in PyTorch
+if platform.system() in ["Linux", "Windows"] and is_cuda_available():
+    try:
+        from torch.utils.cpp_extension import BuildExtension, CUDAExtension
+        
+        ext_modules.append(
+            CUDAExtension(
+                name='torch_rowperm._C',
+                sources=[
+                    'torch_rowperm/_cuda/row_perm.cpp',
+                    'torch_rowperm/_cuda/row_perm.cu',
                 ],
-            },
-            define_macros=[('TORCH_ROWPERM_VERSION', '"0.1.0"')],
+                extra_compile_args={
+                    'cxx': ['-O3'],
+                    'nvcc': [
+                        '-O3',
+                        '--use_fast_math',
+                        '-lineinfo',
+                        '--ptxas-options=-v',
+                        '-gencode=arch=compute_80,code=sm_80',
+                        '-gencode=arch=compute_86,code=sm_86',
+                        '-gencode=arch=compute_89,code=sm_89',
+                        '-gencode=arch=compute_90,code=sm_90',
+                        '-gencode=arch=compute_90,code=compute_90',  # PTX for forward compat
+                    ],
+                },
+                define_macros=[('TORCH_ROWPERM_VERSION', '"0.1.0"')],
+            )
         )
-    )
+        cmdclass = {'build_ext': BuildExtension.with_options(no_python_abi_suffix=True)}
+    except ImportError:
+        # If torch.utils.cpp_extension is not available, we can't build the extension
+        cmdclass = {}
+else:
+    # Not on Linux/Windows or CUDA not available
+    cmdclass = {}
 
 setup(
     name="torch_rowperm",
@@ -49,14 +61,14 @@ setup(
     description="Fast row permutation operations for PyTorch tensors",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    author="mrcha033",
-    author_email="mrcha033@gmail.com",
-    url="https://github.com/mrcha033/rowperm",
+    author="Yunmin",
+    author_email="yunmin@example.com",
+    url="https://github.com/yunmin/torch_rowperm",
     license="MIT",
     python_requires=">=3.9",
     install_requires=["torch>=2.0.0"],
     ext_modules=ext_modules,
-    cmdclass={'build_ext': BuildExtension.with_options(no_python_abi_suffix=True)},
+    cmdclass=cmdclass,
     packages=find_packages(),
     package_data={
         'torch_rowperm': ['*.so', '*.pyd'],

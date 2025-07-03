@@ -193,20 +193,17 @@ class TritonRowPermuteFn(torch.autograd.Function):
         return grad_input, None
 
 
-def permute_rows_triton(input_tensor, indices, inplace=False):
-    """Permute rows using Triton with autograd support.
-    
-    This function uses a different name to avoid conflicts with CUDA implementation.
-    """
-    return TritonRowPermuteFn.apply(input_tensor, indices)
+def permute_rows_triton(input_tensor, indices_tensor):
+    """Permute rows using Triton with autograd support."""
+    return TritonRowPermuteFn.apply(input_tensor, indices_tensor)
 
 
-def permute_rows_triton_(input_tensor, indices):
+def permute_rows_triton_(input_tensor, indices_tensor):
     """In-place version of permute_rows_triton.
     
     Note: This performs a copy internally as Triton doesn't directly support in-place operations.
     """
-    result = permute_rows_triton(input_tensor, indices)
+    result = permute_rows_triton(input_tensor, indices_tensor)
     input_tensor.copy_(result)
     return input_tensor
 

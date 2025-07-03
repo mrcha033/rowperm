@@ -1,13 +1,30 @@
 include LICENSE
 include README.md
 include pyproject.toml
-include setup.py
 include pytest.ini
-recursive-include torch_rowperm *.py *.cpp *.cu *.h
+
+# Include CUDA sources
+include torch_rowperm/_cuda/*.cpp
+include torch_rowperm/_cuda/*.cu
+include torch_rowperm/_cuda/__init__.py
+
+# Include Triton sources
+recursive-include torch_rowperm/_triton *.py
+
+# Include Python package files
+recursive-include torch_rowperm *.py
 recursive-include tests *.py
-recursive-exclude * __pycache__
-recursive-exclude * *.py[cod]
-recursive-exclude * *.so
-recursive-exclude * *.dylib
-recursive-exclude * *.dll
-recursive-exclude * *.pyd 
+
+# Include type information
+include torch_rowperm/py.typed
+
+# Exclude specific files
+exclude .gitignore
+exclude build_wheel_local.bat
+exclude release_*.md
+global-exclude *.py[cod]
+global-exclude __pycache__
+global-exclude *.so
+global-exclude *.dylib
+global-exclude .DS_Store
+global-exclude *.egg-info 

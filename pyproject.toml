@@ -1,9 +1,8 @@
 [build-system]
 requires = [
-    "setuptools>=69.0",
+    "setuptools>=42",
     "wheel",
-    "torch>=2.0.0",
-    "ninja"
+    "torch>=2.0.0"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -12,35 +11,48 @@ name = "torch_rowperm"
 version = "0.1.0"
 description = "Fast row permutation operations for PyTorch tensors"
 readme = "README.md"
-license = {text = "MIT"}
 authors = [
-    {name = "Yunmin", email = "yunmin@example.com"}
+    {name = "rowperm developers", email = "rowperm@example.com"}
 ]
+license = {text = "MIT"}
 requires-python = ">=3.9"
-dependencies = [
-    "torch>=2.0.0",
-]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: C++",
-    "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0.0",
+    "black>=22.0.0",
+    "isort>=5.0.0",
+]
+triton = [
+    "triton>=2.0.0",
+]
+all = [
+    "triton>=2.0.0",
+    "pytest>=6.0.0",
+    "black>=22.0.0",
+    "isort>=5.0.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/yunmin/torch_rowperm"
-Issues = "https://github.com/yunmin/torch_rowperm/issues"
+"Homepage" = "https://github.com/mrcha033/rowperm"
+"Bug Tracker" = "https://github.com/mrcha033/rowperm/issues"
 
 [tool.setuptools]
-packages = ["torch_rowperm"]
+packages = ["rowperm"]
 
 [tool.setuptools.package-data]
 torch_rowperm = ["*.so", "*.pyd"]
@@ -51,4 +63,8 @@ skip = "*-musllinux*"
 manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.environment]
-TORCH_CUDA_ARCH_LIST = "8.0;8.6;8.9;9.0+PTX" 
+TORCH_CUDA_ARCH_LIST = "8.0;8.6;8.9;9.0+PTX"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py" 

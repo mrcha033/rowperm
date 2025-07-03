@@ -1,95 +1,89 @@
 import os
 import sys
-import platform
 from setuptools import setup, find_packages
+import torch
+from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
 
-# Get the absolute path to the directory containing setup.py
-setup_dir = os.path.dirname(os.path.abspath(__file__))
+# Read version from the package
+with open(os.path.join('torch_rowperm', '__init__.py'), 'r') as f:
+    for line in f:
+        if line.startswith('__version__'):
+            version = line.split('=')[1].strip().strip('"\'')
+            break
+    else:
+        version = '0.1.0'
 
-# Check if CUDA is available
-def is_cuda_available():
-    try:
-        import torch
-        return torch.cuda.is_available()
-    except ImportError:
-        return False
+# Get the long description from README.md
+with open('README.md', 'r', encoding='utf-8') as f:
+    long_description = f.read()
 
-# Build extensions list
-ext_modules = []
+# List of source files for CUDA extension
+sources = [
+    'torch_rowperm/_cuda/row_perm.cpp'
+]
 
-# Only try to build CUDA extension if we're on Linux or Windows
-# macOS is not officially supported for CUDA extensions in PyTorch
-if platform.system() in ["Linux", "Windows"] and is_cuda_available():
-    try:
-        from torch.utils.cpp_extension import BuildExtension, CUDAExtension
-        
-        ext_modules.append(
-            CUDAExtension(
-                name='torch_rowperm._C',
-                sources=[
-                    'torch_rowperm/_cuda/row_perm.cpp',
-                    'torch_rowperm/_cuda/row_perm.cu',
-                ],
-                extra_compile_args={
-                    'cxx': ['-O3'],
-                    'nvcc': [
-                        '-O3',
-                        '--use_fast_math',
-                        '-lineinfo',
-                        '--ptxas-options=-v',
-                        '-gencode=arch=compute_80,code=sm_80',
-                        '-gencode=arch=compute_86,code=sm_86',
-                        '-gencode=arch=compute_89,code=sm_89',
-                        '-gencode=arch=compute_90,code=sm_90',
-                        '-gencode=arch=compute_90,code=compute_90',  # PTX for forward compat
-                    ],
-                },
-                define_macros=[('TORCH_ROWPERM_VERSION', '"0.1.0"')],
-            )
-        )
-        cmdclass = {'build_ext': BuildExtension.with_options(no_python_abi_suffix=True)}
-    except ImportError:
-        # If torch.utils.cpp_extension is not available, we can't build the extension
-        cmdclass = {}
+# Determine if CUDA is available
+if torch.cuda.is_available() and os.environ.get('FORCE_CPU', '0') != '1':
+    print("CUDA is available. Building CUDA extension.")
+    sources.append('torch_rowperm/_cuda/row_perm.cu')
+    extension = CUDAExtension
+    define_macros = [('WITH_CUDA', None)]
+    extra_compile_args = {'cxx': ['-O3'], 'nvcc': ['-O3']}
 else:
-    # Not on Linux/Windows or CUDA not available
-    cmdclass = {}
+    print("CUDA is NOT available. Building CPU-only extension.")
+    extension = CppExtension
+    define_macros = []
+    extra_compile_args = {'cxx': ['-O3']}
+
+ext_modules = [
+    extension(
+        name='torch_rowperm._C',
+        sources=sources,
+        define_macros=define_macros,
+        extra_compile_args=extra_compile_args,
+    )
+]
 
 setup(
-    name="torch_rowperm",
-    version="0.1.0",
-    description="Fast row permutation operations for PyTorch tensors",
-    long_description=open("README.md", encoding="utf-8").read(),
-    long_description_content_type="text/markdown",
-    author="Yunmin",
-    author_email="yunmin@example.com",
-    url="https://github.com/yunmin/torch_rowperm",
-    license="MIT",
-    python_requires=">=3.9",
-    install_requires=["torch>=2.0.0"],
-    extras_require={
-        "triton": ["triton>=2.0.0"],
-        "dev": ["pytest", "pandas", "numpy"],
-        "all": ["triton>=2.0.0", "pytest", "pandas", "numpy"],
-    },
-    ext_modules=ext_modules,
-    cmdclass=cmdclass,
+    name='torch_rowperm',
+    version=version,
+    author='rowperm developers',
+    author_email='rowperm@example.com',
+    description='Fast row permutation operations for PyTorch tensors',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://github.com/username/rowperm',
     packages=find_packages(),
-    package_data={
-        'torch_rowperm': ['*.so', '*.pyd'],
+    ext_modules=ext_modules,
+    cmdclass={
+        'build_ext': BuildExtension
     },
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: C++",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    install_requires=[
+        'torch>=2.0.0',
+        'numpy>=1.20.0',
     ],
+    extras_require={
+        'dev': [
+            'pytest>=6.0.0',
+            'black>=22.0.0',
+            'isort>=5.0.0',
+        ],
+        'triton': [
+            'triton>=2.0.0',
+        ],
+    },
+    python_requires='>=3.9',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+    ],
+    package_data={
+        'torch_rowperm': ['_cuda/*.cpp', '_cuda/*.cu', 'py.typed'],
+    },
 ) 

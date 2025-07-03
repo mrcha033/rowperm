@@ -39,7 +39,8 @@ jobs:
 
         CIBW_REPAIR_WHEEL_COMMAND: >
           auditwheel repair -w {dest_dir} \
-            --exclude "libcuda.so.*,libnvidia-*.so.*,libcudart.so.*" {wheel}
+            --plat manylinux2014_x86_64 \
+            --exclude "libcuda.so.*,libcudart.so.*,libnvidia-*.so.*" {wheel}
 
         CIBW_TEST_REQUIRES: "pytest numpy"
         CIBW_TEST_COMMAND: pytest {project}/tests -m "not gpu"

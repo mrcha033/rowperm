@@ -1,0 +1,54 @@
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "wheel",
+    "torch>=2.0.0",
+    "ninja"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "torch_rowperm"
+version = "0.1.0"
+description = "Fast row permutation operations for PyTorch tensors"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Yunmin", email = "yunmin@example.com"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0.0",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/yunmin/torch_rowperm"
+Issues = "https://github.com/yunmin/torch_rowperm/issues"
+
+[tool.setuptools]
+packages = ["torch_rowperm"]
+
+[tool.setuptools.package-data]
+torch_rowperm = ["*.so", "*.pyd"]
+
+[tool.cibuildwheel]
+build = "cp3*-manylinux_x86_64"
+skip = "*-musllinux*"
+manylinux-x86_64-image = "manylinux2014"
+
+[tool.cibuildwheel.environment]
+TORCH_CUDA_ARCH_LIST = "8.0;8.6;8.9;9.0+PTX" 

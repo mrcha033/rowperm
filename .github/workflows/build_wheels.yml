@@ -8,11 +8,24 @@ on:
   workflow_dispatch:
 
 env:
+  # 1️⃣  manylinux 이미지 지정 – 이미 CUDA 12.1 + /opt/python 포함
+  CIBW_MANYLINUX_X86_64_IMAGE: "pytorch/manylinux-builder:cuda12.1"
+  CIBW_BEFORE_ALL_LINUX: ""
   CIBW_ARCHS_LINUX: "x86_64"
   CIBW_BUILD: "cp39-* cp310-* cp311-*"
   CIBW_SKIP: "*-musllinux_*"
   CIBW_BUILD_VERBOSITY: "1"
-  CIBW_MANYLINUX_X86_64_IMAGE: "nvidia/cuda:12.1.1-devel-centos7"
+  CIBW_ENVIRONMENT: |
+    TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0+PTX"
+    FORCE_CUDA=1
+  CIBW_BEFORE_BUILD: |
+    pip install -U pip wheel setuptools ninja &&
+    pip install torch==2.3.0 --extra-index-url https://download.pytorch.org/whl/cu121
+  CIBW_REPAIR_WHEEL_COMMAND: >
+    auditwheel repair -w {dest_dir} --exclude "libcuda.so.*,libnvidia-*.so.*" {wheel}
+  CIBW_TEST_REQUIRES: "pytest numpy"
+  CIBW_TEST_COMMAND: >
+    pytest {project}/tests -m "not gpu"
 
 jobs:
 # ────────────────────────────────────────────────────────────

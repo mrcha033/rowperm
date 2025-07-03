@@ -7,99 +7,95 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  # 1️⃣  manylinux 이미지 지정 – 이미 CUDA 12.1 + /opt/python 포함
-  CIBW_MANYLINUX_X86_64_IMAGE: "pytorch/manylinux-builder:cuda12.1"
-  CIBW_BEFORE_ALL_LINUX: ""
-  CIBW_ARCHS_LINUX: "x86_64"
-  CIBW_BUILD: "cp39-* cp310-* cp311-*"
-  CIBW_SKIP: "*-musllinux_*"
-  CIBW_BUILD_VERBOSITY: "1"
-  CIBW_ENVIRONMENT: |
-    TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0+PTX"
-    FORCE_CUDA=1
-  CIBW_BEFORE_BUILD: |
-    pip install -U pip wheel setuptools ninja &&
-    pip install torch==2.3.0 --extra-index-url https://download.pytorch.org/whl/cu121
-  CIBW_REPAIR_WHEEL_COMMAND: >
-    auditwheel repair -w {dest_dir} --exclude "libcuda.so.*,libnvidia-*.so.*" {wheel}
-  CIBW_TEST_REQUIRES: "pytest numpy"
-  CIBW_TEST_COMMAND: >
-    pytest {project}/tests -m "not gpu"
-
 jobs:
-# ────────────────────────────────────────────────────────────
   build_wheels:
+    name: Build wheels for ${{ matrix.pyver }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pyver: ["cp39-manylinux_x86_64", "cp310-manylinux_x86_64", "cp311-manylinux_x86_64"]
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: 🔧 Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    - name: 🐍 Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      - name: 📦 Install cibuildwheel
+        run: python -m pip install --upgrade pip cibuildwheel==2.16.2
 
-    - name: 📦 Install cibuildwheel
-      run: python -m pip install --upgrade pip cibuildwheel==2.16.2
+      - name: 🚀 Build wheels
+        env:
+          CIBW_BUILD: ${{ matrix.pyver }}
+          CIBW_SKIP: "*-musllinux_*"
+          CIBW_MANYLINUX_X86_64_IMAGE: "pytorch/manylinux-builder:cuda12.1"
+          CIBW_BUILD_VERBOSITY: "1"
+          CIBW_ENVIRONMENT: |
+            TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0+PTX"
+            FORCE_CUDA=1
+          CIBW_BEFORE_BUILD: |
+            pip install --no-cache-dir -U pip wheel setuptools ninja &&
+            pip install --no-cache-dir torch==2.3.0 --extra-index-url https://download.pytorch.org/whl/cu121
+          CIBW_REPAIR_WHEEL_COMMAND: >
+            auditwheel repair -w {dest_dir} --exclude "libcuda.so.*,libnvidia-*.so.*" {wheel}
+          CIBW_TEST_REQUIRES: "pytest numpy"
+          CIBW_TEST_COMMAND: >
+            pytest {project}/tests -m "not gpu"
+        run: python -m cibuildwheel --output-dir wheelhouse
 
-    - name: 🚀 Build wheels
-      env:
-        # CUDA 런타임은 컨테이너에 이미 포함
-        CIBW_ENVIRONMENT: >
-          TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0+PTX"
-          FORCE_CUDA=1
-        # 빌드 때 필요한 패키지
-        CIBW_BEFORE_BUILD: |
-          pip install wheel setuptools ninja &&
-          pip install torch==2.3.0 --extra-index-url https://download.pytorch.org/whl/cu121
-        # CUDA so 화이트리스트 제외
-        CIBW_REPAIR_WHEEL_COMMAND: >
-          auditwheel repair -w {dest_dir} --exclude libcuda.so.* --exclude libnvidia-*.so.* {wheel}
-        # GPU 없는 환경에서 테스트 건너뛰기
-        CIBW_TEST_REQUIRES: "pytest numpy"
-        CIBW_TEST_COMMAND: >
-          pytest {project}/tests -m "not gpu"
-      run: python -m cibuildwheel --output-dir wheelhouse
+      - name: 🧹 Clean up
+        if: always()
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          docker image prune -af
+          df -h
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: wheels-linux-cuda
-        path: wheelhouse/*.whl
-
-# ────────────────────────────────────────────────────────────
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.pyver }}
+          path: wheelhouse/*.whl
+          
   build_sdist:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
-      with: {python-version: "3.10"}
-    - run: |
-        python -m pip install --upgrade pip build
-        python -m build --sdist
-    - uses: actions/upload-artifact@v4
-      with:
-        name: sdist
-        path: dist/*.tar.gz
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with: {python-version: "3.10"}
+      - run: |
+          python -m pip install --upgrade pip build
+          python -m build --sdist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
 
-# ────────────────────────────────────────────────────────────
   publish:
+    name: Publish wheels
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
     steps:
-    - uses: actions/download-artifact@v4
-      with: {name: wheels-linux-cuda, path: dist}
-    - uses: actions/download-artifact@v4
-      with: {name: sdist, path: dist}
-    - name: 📤 Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
-        skip_existing: true
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-linux-*
+          path: dist
+          merge-multiple: true
+
+      - name: Download sdist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+      
+      - name: 📤 Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip_existing: true

@@ -67,6 +67,11 @@ setup(
     license="MIT",
     python_requires=">=3.9",
     install_requires=["torch>=2.0.0"],
+    extras_require={
+        "triton": ["triton>=2.0.0"],
+        "dev": ["pytest", "pandas", "numpy"],
+        "all": ["triton>=2.0.0", "pytest", "pandas", "numpy"],
+    },
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=find_packages(),

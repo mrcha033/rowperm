@@ -10,8 +10,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "rowperm"
 version = "0.1.0"
-author = "mrcha033"
-author_email = "mrcha033@gmail.com"
+authors = [
+    { name = "mrcha033", email = "mrcha033@gmail.com" },
+]
 description = "Fast row permutation operations for PyTorch tensors"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -47,7 +48,7 @@ triton = [
 packages = ["torch_rowperm", "torch_rowperm._cuda", "torch_rowperm._triton"]
 
 [tool.setuptools.package-data]
-"rowperm" = ["_cuda/*.cpp", "_cuda/*.cu", "py.typed"]
+"torch_rowperm" = ["_cuda/*.cpp", "_cuda/*.cu", "py.typed"]
 
 [tool.cibuildwheel]
 build = "cp3*-manylinux_x86_64"
